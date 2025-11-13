@@ -1,16 +1,32 @@
 import json
 import logging
-import requests
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
-import import_declare_test
+import requests
 from solnlib import conf_manager, log
 from solnlib.modular_input import checkpointer
 from splunklib import modularinput as smi
 
-
 ADDON_NAME = "qualtrics_audit"
+ACTIVITY_TYPES = [
+    "logins",
+    "session_creations",
+    "session_terminations",
+    "password_changes",
+    "password_resets",
+    "users",
+    "brands",
+    "role_membership_change",
+    "role_permission_change",
+    "user_permission_change",
+    "contact_list",
+    "contact",
+    "directory",
+    "directory_setting",
+    "dashboard_usage",
+    "api_access",
+]
 
 
 def logger_for_input(input_name: str) -> logging.Logger:
@@ -27,7 +43,7 @@ def get_account_config(session_key: str, account_name: str):
     account_config = account_conf_file.get(account_name)
     return {
         "api_key": account_config.get("api_key"),
-        "domain": account_config.get("domain", "yul1.qualtrics.com"),
+        "datacenter": account_config.get("datacenter", "api"),
     }
 
 
@@ -60,34 +76,33 @@ def save_checkpoint(
     ckpt.update(key, checkpoint_data)
 
 
-def get_data_from_api(
+def get_data_from_api_for_activity_type(
+    session: requests.Session,
     logger: logging.Logger,
-    api_key: str,
-    domain: str,
+    datacenter: str,
+    activity_type: str,
     start_date: datetime,
     end_date: datetime,
 ):
-    """Fetch audit log data from Qualtrics API with date range filtering."""
-    session = requests.Session()
-    session.headers.update({"X-API-TOKEN": api_key})
-
+    """Fetch audit log data from Qualtrics API for a specific activity type."""
     # Build query parameters
     params = {
+        "activityType": activity_type,
         "pageSize": 1000,
         "startDate": start_date.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
         "endDate": end_date.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
     }
 
-    base_url = f"https://{domain}/API/v3/logs"
+    base_url = f"https://{datacenter}.qualtrics.com/API/v3/logs"
     url = f"{base_url}?{urlencode(params)}"
 
     results = []
 
-    logger.info(f"Fetching data from {start_date} to {end_date}")
+    logger.info(f"Fetching {activity_type} data from {start_date} to {end_date}")
 
     while url:
-        logger.debug(f"Fetching page: {url}")
-        resp = session.get(url)
+        logger.debug(f"Fetching {activity_type} page: {url}")
+        resp = session.get(url, params=params)
 
         if resp.status_code == 200:
             data = resp.json()
@@ -98,16 +113,16 @@ def get_data_from_api(
             url = data.get("result", {}).get("nextPage")
 
             logger.info(
-                f"Fetched {len(elements)} records from current page. Total so far: {len(results)}"
+                f"Fetched {len(elements)} {activity_type} records from current page. Total so far: {len(results)}"
             )
 
         else:
             logger.error(
-                f"Failed to fetch data from API: {resp.status_code} - {resp.text}"
+                f"Failed to fetch {activity_type} data from API: {resp.status_code} - {resp.text}"
             )
             break
 
-    logger.info(f"Total records fetched: {len(results)}")
+    logger.info(f"Total {activity_type} records fetched: {len(results)}")
     return results
 
 
@@ -116,17 +131,6 @@ def validate_input(definition: smi.ValidationDefinition):
 
 
 def stream_events(inputs: smi.InputDefinition, event_writer: smi.EventWriter):
-    # inputs.inputs is a Python dictionary object like:
-    # {
-    #   "qualtrics_audit://<input_name>": {
-    #     "account": "<account_name>",
-    #     "disabled": "0",
-    #     "host": "$decideOnStartup",
-    #     "index": "<index_name>",
-    #     "interval": "<interval_value>",
-    #     "python.version": "python3",
-    #   },
-    # }
     session_key = inputs.metadata["session_key"]
 
     # Initialize KV Store checkpointer
@@ -158,7 +162,14 @@ def stream_events(inputs: smi.InputDefinition, event_writer: smi.EventWriter):
             account_name = input_item.get("account")
             account_config = get_account_config(session_key, account_name)
             api_key = account_config["api_key"]
-            domain = account_config["domain"]
+            datacenter = account_config["datacenter"]
+
+            # Get activity types from input configuration
+            selected_activity_types = [
+                t.strip() for t in input_item.get("activity_types", "").split(",")
+            ]
+
+            logger.info(f"Processing activity types: {selected_activity_types}")
 
             # Get checkpoint key and determine date range for this run
             checkpoint_key = get_checkpoint_key(normalized_input_name, account_name)
@@ -167,19 +178,50 @@ def stream_events(inputs: smi.InputDefinition, event_writer: smi.EventWriter):
 
             logger.info(f"Processing data from {start_date} to {end_date}")
 
-            # Fetch data with date range
-            data = get_data_from_api(logger, api_key, domain, start_date, end_date)
+            # Create a single session for all API calls
+            session = requests.Session()
+            session.headers.update({"X-API-TOKEN": api_key})
 
-            # Write events to Splunk
-            events_written = 0
-            for line in data:
-                event_writer.write_event(
-                    smi.Event(
-                        data=json.dumps(line, ensure_ascii=False, default=str),
-                        index=input_item.get("index"),
+            total_events_written = 0
+
+            # Process each activity type separately
+            for activity_type in selected_activity_types:
+                try:
+                    # Fetch data for this specific activity type
+                    data = get_data_from_api_for_activity_type(
+                        session, logger, datacenter, activity_type, start_date, end_date
                     )
-                )
-                events_written += 1
+
+                    # Write events with activity-type-specific sourcetype
+                    activity_events_written = 0
+                    sourcetype = f"qualtrics:audit:{activity_type}"
+                    source = f"{datacenter}.qualtrics.com/API/v3/logs"
+
+                    for line in data:
+                        event_writer.write_event(
+                            smi.Event(
+                                time=datetime.fromisoformat(
+                                    line["timestamp"].replace("Z", "+00:00")
+                                ).timestamp(),
+                                data=json.dumps(
+                                    line["descriptor"], ensure_ascii=False, default=str
+                                ),
+                                sourcetype=sourcetype,
+                                source=source,
+                            )
+                        )
+                        activity_events_written += 1
+                        total_events_written += 1
+
+                    logger.info(
+                        f"Written {activity_events_written} events for activity type: {activity_type}"
+                    )
+
+                except Exception as e:
+                    logger.error(
+                        f"Failed to process activity type {activity_type}: {e}"
+                    )
+                    continue
 
             # Save checkpoint with this run's end date (which becomes next run's start date)
             save_checkpoint(ckpt, checkpoint_key, end_date)
@@ -188,7 +230,8 @@ def stream_events(inputs: smi.InputDefinition, event_writer: smi.EventWriter):
             log.events_ingested(
                 logger,
                 input_name,
-                events_written,
+                "qualtrics:audit:*",
+                total_events_written,
                 input_item.get("index"),
                 account=account_name,
             )
