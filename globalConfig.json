@@ -23,106 +23,9 @@
                             "label": "Name",
                             "validators": [
                                 {
-                                    "name": "account",
-                                    "table": {
-                                        "actions": [
-                                            "edit",
-                                            "delete",
-                                            "clone"
-                                        ],
-                                        "header": [
-                                            {
-                                                "label": "Name",
-                                                "field": "name"
-                                            }
-                                        ]
-                                    },
-                                    "entity": [
-                                        {
-                                            "type": "text",
-                                            "label": "Name",
-                                            "validators": [
-                                                {
-                                                    "type": "regex",
-                                                    "errorMsg": "Account Name must begin with a letter and consist exclusively of alphanumeric characters and underscores.",
-                                                    "pattern": "^[a-zA-Z]\\w*$"
-                                                },
-                                                {
-                                                    "type": "string",
-                                                    "errorMsg": "Length of input name should be between 1 and 100",
-                                                    "minLength": 1,
-                                                    "maxLength": 100
-                                                }
-                                            ],
-                                            "field": "name",
-                                            "help": "A unique name for the account.",
-                                            "required": true
-                                        },
-                                        {
-                                            "type": "text",
-                                            "label": "API key",
-                                            "field": "api_key",
-                                            "help": "API key",
-                                            "required": true,
-                                            "encrypted": true,
-                                            "validators": [
-                                                {
-                                                    "type": "string",
-                                                    "errorMsg": "Length of API key should be between 1 and 50",
-                                                    "minLength": 1,
-                                                    "maxLength": 50
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            "type": "singleSelect",
-                                            "label": "Datacenter",
-                                            "field": "datacenter",
-                                            "help": "Select the datacenter",
-                                            "required": true,
-                                            "options": {
-                                                "items": [
-                                                    {
-                                                        "value": "yul1",
-                                                        "label": "Canadian Data Center"
-                                                    },
-                                                    {
-                                                        "value": "iad1",
-                                                        "label": "Washington, DC Area Data Center"
-                                                    },
-                                                    {
-                                                        "value": "sjc1",
-                                                        "label": "San Jose, California Data Center"
-                                                    },
-                                                    {
-                                                        "value": "fra1",
-                                                        "label": "European Union Data Center"
-                                                    },
-                                                    {
-                                                        "value": "lhr1",
-                                                        "label": "London, United Kingdom Data Center"
-                                                    },
-                                                    {
-                                                        "value": "syd1",
-                                                        "label": "Sydney, Australia Data Center"
-                                                    },
-                                                    {
-                                                        "value": "sin1",
-                                                        "label": "Singapore Data Center"
-                                                    },
-                                                    {
-                                                        "value": "hnd1",
-                                                        "label": "Tokyo, Japan Data Center"
-                                                    },
-                                                    {
-                                                        "value": "gov1",
-                                                        "label": "US Government Data Center"
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    ],
-                                    "title": "Accounts"
+                                    "type": "regex",
+                                    "errorMsg": "Account Name must begin with a letter and consist exclusively of alphanumeric characters and underscores.",
+                                    "pattern": "^[a-zA-Z]\\w*$"
                                 },
                                 {
                                     "type": "string",
@@ -144,144 +47,10 @@
                             "encrypted": true,
                             "validators": [
                                 {
-                                    "name": "qualtrics_audit",
-                                    "entity": [
-                                        {
-                                            "type": "text",
-                                            "label": "Name",
-                                            "validators": [
-                                                {
-                                                    "type": "regex",
-                                                    "errorMsg": "Input Name must begin with a letter and consist exclusively of alphanumeric characters and underscores.",
-                                                    "pattern": "^[a-zA-Z]\\w*$"
-                                                },
-                                                {
-                                                    "type": "string",
-                                                    "errorMsg": "Length of input name should be between 1 and 100",
-                                                    "minLength": 1,
-                                                    "maxLength": 100
-                                                }
-                                            ],
-                                            "field": "name",
-                                            "help": "A unique name for the data input.",
-                                            "required": true
-                                        },
-                                        {
-                                            "type": "interval",
-                                            "label": "Interval",
-                                            "defaultValue": "300",
-                                            "field": "interval",
-                                            "options": {
-                                                "range": [
-                                                    10,
-                                                    301
-                                                ]
-                                            },
-                                            "help": "Time interval of the data input, in seconds.",
-                                            "required": true
-                                        },
-                                        {
-                                            "type": "index",
-                                            "field": "index",
-                                            "label": "Index"
-                                        },
-                                        {
-                                            "type": "singleSelect",
-                                            "label": "Account to use",
-                                            "options": {
-                                                "referenceName": "account"
-                                            },
-                                            "help": "Account to use for this input.",
-                                            "field": "account",
-                                            "required": true,
-                                            "validators": [
-                                                {
-                                                    "type": "string",
-                                                    "errorMsg": "Length of account name should be between 1 and 100",
-                                                    "minLength": 1,
-                                                    "maxLength": 100
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            "type": "multipleSelect",
-                                            "label": "Activity Types",
-                                            "field": "activity_types",
-                                            "help": "Select the activity types to collect audit data for.",
-                                            "required": true,
-                                            "options": {
-                                                "delimiter": ",",
-                                                "items": [
-                                                    {
-                                                        "value": "logins",
-                                                        "label": "Logins"
-                                                    },
-                                                    {
-                                                        "value": "session_creations",
-                                                        "label": "Session Creations"
-                                                    },
-                                                    {
-                                                        "value": "session_terminations",
-                                                        "label": "Session Terminations"
-                                                    },
-                                                    {
-                                                        "value": "password_changes",
-                                                        "label": "Password Changes"
-                                                    },
-                                                    {
-                                                        "value": "password_resets",
-                                                        "label": "Password Resets"
-                                                    },
-                                                    {
-                                                        "value": "users",
-                                                        "label": "Users"
-                                                    },
-                                                    {
-                                                        "value": "brands",
-                                                        "label": "Brands"
-                                                    },
-                                                    {
-                                                        "value": "role_membership_change",
-                                                        "label": "Role Membership Change"
-                                                    },
-                                                    {
-                                                        "value": "role_permission_change",
-                                                        "label": "Role Permission Change"
-                                                    },
-                                                    {
-                                                        "value": "user_permission_change",
-                                                        "label": "User Permission Change"
-                                                    },
-                                                    {
-                                                        "value": "contact_list",
-                                                        "label": "Contact List"
-                                                    },
-                                                    {
-                                                        "value": "contact",
-                                                        "label": "Contact"
-                                                    },
-                                                    {
-                                                        "value": "directory",
-                                                        "label": "Directory"
-                                                    },
-                                                    {
-                                                        "value": "directory_setting",
-                                                        "label": "Directory Setting"
-                                                    },
-                                                    {
-                                                        "value": "dashboard_usage",
-                                                        "label": "Dashboard Usage"
-                                                    },
-                                                    {
-                                                        "value": "api_access",
-                                                        "label": "API Access"
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    ],
-                                    "inputHelperModule": "qualtrics_audit_helper",
-                                    "title": "Qualtrics Audit"
+                                    "type": "string",
+                                    "errorMsg": "Length of API key should be between 1 and 50",
+                                    "minLength": 1,
+                                    "maxLength": 50
                                 }
                             ]
                         },
@@ -294,8 +63,8 @@
                             "validators": [
                                 {
                                     "type": "regex",
-                                    "errorMsg": "Datacenter must be one of the valid options: yul1, iad1, sjc1, fra1, lhr1, syd1, sin1, hnd1, gov1",
-                                    "pattern": "^(yul1|iad1|sjc1|fra1|lhr1|syd1|sin1|hnd1|gov1)$"
+                                    "errorMsg": "Datacenter must be one of the valid datacenter prefix (such as syd1)",
+                                    "pattern": "^[a-z]{3}[0-9]$"
                                 }
                             ],
                             "options": {
@@ -420,8 +189,8 @@
                             "validators": [
                                 {
                                     "type": "regex",
-                                    "errorMsg": "Activity types must be a comma-separated list of valid options: logins, session_creations, session_terminations, password_changes, password_resets, users, brands, role_membership_change, role_permission_change, user_permission_change, contact_list, contact, directory, directory_setting, dashboard_usage, api_access",
-                                    "pattern": "^(logins|session_creations|session_terminations|password_changes|password_resets|users|brands|role_membership_change|role_permission_change|user_permission_change|contact_list|contact|directory|directory_setting|dashboard_usage|api_access)(,(logins|session_creations|session_terminations|password_changes|password_resets|users|brands|role_membership_change|role_permission_change|user_permission_change|contact_list|contact|directory|directory_setting|dashboard_usage|api_access))*$"
+                                    "errorMsg": "Activity types must be a comma-separated list of snake case values",
+                                    "pattern": "^[a-z_,]+$"
                                 }
                             ],
                             "options": {
