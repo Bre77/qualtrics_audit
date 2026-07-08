@@ -8,6 +8,10 @@ This file is the project's committed home for project-intrinsic agent knowledge:
   Look in `globalConfig.json` for input/config schema, not a committed conf file.
 - `splunk-sdk` is capped to `>=2.1.1,<3` in `package/lib/requirements.txt` (splunk-sdk 3.x requires
   Python 3.13 only and breaks Splunk's Python 3.9 runtime). Keep this cap when touching dependencies.
+- Dual-Python support (`python.required = 3.9, 3.13`) is declared via `meta.supportedPythonVersion` in
+  `globalConfig.json`, not a conf file edit. ucc-gen templates it into every generated conf stanza that
+  carries `python.version` (`inputs.conf`, `restmap.conf`, etc). Verify with `ucc-gen build` and inspect
+  `output/qualtrics_audit/default/*.conf`.
 
 ## Maintaining this file
 
