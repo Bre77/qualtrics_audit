@@ -20,6 +20,10 @@ This file is the project's committed home for project-intrinsic agent knowledge:
   `Bre77/splunk_nats` (`.github/workflows/_reusable-build-appinspect.yml@main`) with `use_ucc_gen: true`;
   it is not copied locally. It is credential-free and never publishes - Splunkbase publishing stays a
   separate, human-triggered step.
+- `package/lib/exclude.txt` drops `solnlib`/`splunktaucclib`'s optional OpenTelemetry+grpc chain
+  (`grpcio`, `protobuf`, `opentelemetry-*`) from the ucc-gen build - those wheels vendor x86_64-only
+  native `.so` files that fail AppInspect's `check_aarch64_compatibility`, and this add-on never imports
+  that observability path. Mirrors `Bre77/splunk_nats`'s `package/lib/exclude.txt`.
 
 ## Maintaining this file
 
