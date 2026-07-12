@@ -329,7 +329,7 @@
     "meta": {
         "name": "qualtrics_audit",
         "restRoot": "qualtrics_audit",
-        "version": "0.1.1",
+        "version": "0.1.4",
         "displayName": "Qualtrics Audit",
         "schemaVersion": "0.0.10",
         "supportedThemes": [

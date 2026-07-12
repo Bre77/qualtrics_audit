@@ -12,6 +12,14 @@ This file is the project's committed home for project-intrinsic agent knowledge:
   `globalConfig.json`, not a conf file edit. ucc-gen templates it into every generated conf stanza that
   carries `python.version` (`inputs.conf`, `restmap.conf`, etc). Verify with `ucc-gen build` and inspect
   `output/qualtrics_audit/default/*.conf`.
+- `globalConfig.json` `meta.version` is the sole version source of truth. Past Splunkbase releases were
+  sometimes bumped at publish time without committing back, so before bumping, check the live listing
+  (`gh api https://splunkbase.splunk.com/api/v1/app/8229/release/`, newest release name) rather than
+  trusting the committed value - the new version must be strictly greater than whatever is actually published.
+- CI (`.github/workflows/validate.yml`) calls the reusable build+AppInspect workflow hosted in
+  `Bre77/splunk_nats` (`.github/workflows/_reusable-build-appinspect.yml@main`) with `use_ucc_gen: true`;
+  it is not copied locally. It is credential-free and never publishes - Splunkbase publishing stays a
+  separate, human-triggered step.
 
 ## Maintaining this file
 
